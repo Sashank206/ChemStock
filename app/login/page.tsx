@@ -199,24 +199,6 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
-
-          {/* Demo Credentials */}
-          <div className="mt-8 p-4 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
-              Demo Credentials
-            </p>
-            <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
-              <p>
-                <strong>Admin:</strong> admin@example.com / password
-              </p>
-              <p>
-                <strong>Seller:</strong> seller@example.com / password
-              </p>
-              <p>
-                <strong>User:</strong> user@example.com / password
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </main>

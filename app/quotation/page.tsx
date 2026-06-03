@@ -1,14 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
+import { PremiumLayout } from "@/components/premium-layout";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/pricing";
-
-const nav: NavItem[] = [
-  { title: "Products", href: "/products" },
-  { title: "Quotation", href: "/quotation" },
-  { title: "Orders", href: "/orders" },
-];
 
 async function placeOrder(formData: FormData) {
   "use server";
@@ -47,15 +41,23 @@ async function placeOrder(formData: FormData) {
 
 export default async function QuotationPage() {
   const session = await getCurrentUser();
+  if (!session?.user || session.user.role !== "USER") {
+    return <div>Unauthorized</div>;
+  }
   const quotations = await prisma.quotation.findMany({
-    where: { userId: session?.user?.id },
+    where: { userId: session.user.id },
     include: { items: { include: { product: true } } },
     orderBy: { createdAt: "desc" },
   });
 
   return (
-    <DashboardShell title="Your Quotations" description="Review quote requests and convert them into orders." nav={nav}>
-      <div className="space-y-4">
+    <PremiumLayout role="USER" userName={session.user.name || "User"}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Your Quotations</h1>
+          <p className="text-sm text-slate-500 mt-1">Review quote requests and convert them into orders.</p>
+        </div>
+        <div className="space-y-4">
         {quotations.map((quotation) => (
           <div key={quotation.id} className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -80,8 +82,8 @@ export default async function QuotationPage() {
               </form>
             ) : null}
           </div>
-        ))}
+        </div>
       </div>
-    </DashboardShell>
+    </PremiumLayout>
   );
 }

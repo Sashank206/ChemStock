@@ -1,25 +1,22 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
-
-const nav: NavItem[] = [
-  { title: "Products", href: "/admin/products" },
-  { title: "Orders", href: "/admin/orders" },
-  { title: "Users", href: "/admin/users" },
-  { title: "Inventory", href: "/admin/inventory" },
-];
+import { PremiumLayout } from "@/components/premium-layout";
 
 export default async function AdminUsersPage() {
   const session = await getCurrentUser();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return <div>Unauthorized</div>;
+  }
   const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
 
   return (
-    <DashboardShell
-      title="User Directory"
-      description="Browse all registered sellers, users, and administrators."
-      nav={nav}
-    >
-      <div className="grid gap-4">
+    <PremiumLayout role="ADMIN" userName={session.user.name || "Admin"}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">User Directory</h1>
+          <p className="text-sm text-slate-500 mt-1">Browse all registered sellers, users, and administrators.</p>
+        </div>
+        <div className="grid gap-4">
         {users.map((user) => (
           <div key={user.id} className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -32,7 +29,8 @@ export default async function AdminUsersPage() {
             <p className="mt-4 text-sm text-muted-foreground">Joined {user.createdAt.toLocaleDateString()}</p>
           </div>
         ))}
+        </div>
       </div>
-    </DashboardShell>
+    </PremiumLayout>
   );
 }

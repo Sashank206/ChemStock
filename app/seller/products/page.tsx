@@ -1,17 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
+import { PremiumLayout } from "@/components/premium-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { productSchema } from "@/lib/validations";
 import { formatMoney } from "@/lib/pricing";
-
-const nav: NavItem[] = [
-  { title: "Products", href: "/seller/products" },
-  { title: "Orders", href: "/seller/orders" },
-  { title: "Quotations", href: "/seller/quotations" },
-];
 
 async function createProduct(formData: FormData) {
   "use server";
@@ -85,14 +79,22 @@ async function updateProduct(formData: FormData) {
 
 export default async function SellerProductsPage() {
   const session = await getCurrentUser();
+  if (!session?.user || session.user.role !== "SELLER") {
+    return <div>Unauthorized</div>;
+  }
   const products = await prisma.product.findMany({
-    where: { sellerId: session?.user?.id },
+    where: { sellerId: session.user.id },
     orderBy: { createdAt: "desc" },
   });
 
   return (
-    <DashboardShell title="My Products" description="Add and manage your inventory." nav={nav}>
-      <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
+    <PremiumLayout role="SELLER" userName={session.user.name || "Seller"}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">My Products</h1>
+          <p className="text-sm text-slate-500 mt-1">Add and manage your inventory.</p>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
         <section className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
           <h2 className="text-lg font-semibold text-foreground">Create Product</h2>
           <form action={createProduct} className="mt-6 grid gap-4">
@@ -199,6 +201,7 @@ export default async function SellerProductsPage() {
           </div>
         </section>
       </div>
-    </DashboardShell>
+    </div>
+  </PremiumLayout>
   );
 }

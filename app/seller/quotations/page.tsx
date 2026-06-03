@@ -1,25 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
+import { PremiumLayout } from "@/components/premium-layout";
 import { formatMoney } from "@/lib/pricing";
-
-const nav: NavItem[] = [
-  { title: "Products", href: "/seller/products" },
-  { title: "Orders", href: "/seller/orders" },
-  { title: "Quotations", href: "/seller/quotations" },
-];
 
 export default async function SellerQuotationsPage() {
   const session = await getCurrentUser();
+  if (!session?.user || session.user.role !== "SELLER") {
+    return <div>Unauthorized</div>;
+  }
   const quotations = await prisma.quotation.findMany({
-    where: { items: { some: { product: { sellerId: session?.user?.id } } } },
+    where: { items: { some: { product: { sellerId: session.user.id } } } },
     include: { user: true, items: { include: { product: true } } },
     orderBy: { createdAt: "desc" },
   });
 
   return (
-    <DashboardShell title="Seller Quotations" description="Review quotation requests that include your products." nav={nav}>
-      <div className="space-y-4">
+    <PremiumLayout role="SELLER" userName={session.user.name || "Seller"}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Seller Quotations</h1>
+          <p className="text-sm text-slate-500 mt-1">Review quotation requests that include your products.</p>
+        </div>
+        <div className="space-y-4">
         {quotations.map((quotation) => (
           <div key={quotation.id} className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -39,8 +41,8 @@ export default async function SellerQuotationsPage() {
               ))}
             </div>
           </div>
-        ))}
+        </div>
       </div>
-    </DashboardShell>
+    </PremiumLayout>
   );
 }

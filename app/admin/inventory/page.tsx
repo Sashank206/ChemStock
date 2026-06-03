@@ -1,26 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
+import { PremiumLayout } from "@/components/premium-layout";
 import { Badge } from "@/components/ui/badge";
-
-const nav: NavItem[] = [
-  { title: "Products", href: "/admin/products" },
-  { title: "Orders", href: "/admin/orders" },
-  { title: "Users", href: "/admin/users" },
-  { title: "Inventory", href: "/admin/inventory" },
-];
 
 export default async function AdminInventoryPage() {
   const session = await getCurrentUser();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return <div>Unauthorized</div>;
+  }
   const products = await prisma.product.findMany({ include: { seller: true }, orderBy: { stockQuantity: "asc" } });
 
   return (
-    <DashboardShell
-      title="Inventory Oversight"
-      description="Track stock levels across products and flag low inventory items."
-      nav={nav}
-    >
-      <div className="grid gap-4">
+    <PremiumLayout role="ADMIN" userName={session.user.name || "Admin"}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Inventory Oversight</h1>
+          <p className="text-sm text-slate-500 mt-1">Track stock levels across products and flag low inventory items.</p>
+        </div>
+        <div className="grid gap-4">
         {products.map((product) => {
           const isLow = Number(product.stockQuantity) < 20;
           return (
@@ -40,7 +37,8 @@ export default async function AdminInventoryPage() {
             </div>
           );
         })}
+        </div>
       </div>
-    </DashboardShell>
+    </PremiumLayout>
   );
 }

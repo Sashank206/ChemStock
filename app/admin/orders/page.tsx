@@ -1,16 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
+import { PremiumLayout } from "@/components/premium-layout";
 import { Button } from "@/components/ui/button";
 import { orderStatusSchema } from "@/lib/validations";
 import { formatMoney } from "@/lib/pricing";
-
-const nav: NavItem[] = [
-  { title: "Products", href: "/admin/products" },
-  { title: "Orders", href: "/admin/orders" },
-  { title: "Users", href: "/admin/users" },
-  { title: "Inventory", href: "/admin/inventory" },
-];
 
 async function updateOrderStatus(formData: FormData) {
   "use server";
@@ -26,18 +19,22 @@ async function updateOrderStatus(formData: FormData) {
 
 export default async function AdminOrdersPage() {
   const session = await getCurrentUser();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return <div>Unauthorized</div>;
+  }
   const orders = await prisma.order.findMany({
     include: { user: true, items: { include: { product: true } } },
     orderBy: { createdAt: "desc" },
   });
 
   return (
-    <DashboardShell
-      title="Order Management"
-      description="Review all orders and update status centrally."
-      nav={nav}
-    >
-      <div className="space-y-4">
+    <PremiumLayout role="ADMIN" userName={session.user.name || "Admin"}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Order Management</h1>
+          <p className="text-sm text-slate-500 mt-1">Review all orders and update status centrally.</p>
+        </div>
+        <div className="space-y-4">
         {orders.map((order) => (
           <div key={order.id} className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -64,7 +61,8 @@ export default async function AdminOrdersPage() {
             </div>
           </div>
         ))}
+        </div>
       </div>
-    </DashboardShell>
+    </PremiumLayout>
   );
 }

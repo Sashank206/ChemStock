@@ -1,19 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
+import { PremiumLayout } from "@/components/premium-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { productSchema } from "@/lib/validations";
 import { formatMoney } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
-
-const nav: NavItem[] = [
-  { title: "Products", href: "/admin/products" },
-  { title: "Orders", href: "/admin/orders" },
-  { title: "Users", href: "/admin/users" },
-  { title: "Inventory", href: "/admin/inventory" },
-];
 
 async function createProduct(formData: FormData) {
   "use server";
@@ -89,18 +82,22 @@ async function updateProduct(formData: FormData) {
 
 export default async function AdminProductsPage() {
   const session = await getCurrentUser();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return <div>Unauthorized</div>;
+  }
   const [products, sellers] = await Promise.all([
     prisma.product.findMany({ include: { seller: true } }),
     prisma.user.findMany({ where: { role: "SELLER" } }),
   ]);
 
   return (
-    <DashboardShell
-      title="Product Management"
-      description={`Create, update, and audit all products in the system.`}
-      nav={nav}
-    >
-      <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
+    <PremiumLayout role="ADMIN" userName={session.user.name || "Admin"}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Product Management</h1>
+          <p className="text-sm text-slate-500 mt-1">Create, update, and audit all products in the system.</p>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
         <section className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
           <h2 className="text-lg font-semibold text-foreground">Create Product</h2>
           <form action={createProduct} className="mt-6 grid gap-4">
@@ -256,6 +253,7 @@ export default async function AdminProductsPage() {
           </div>
         </section>
       </div>
-    </DashboardShell>
+    </div>
+  </PremiumLayout>
   );
 }

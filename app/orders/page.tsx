@@ -1,25 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
+import { PremiumLayout } from "@/components/premium-layout";
 import { formatMoney } from "@/lib/pricing";
-
-const nav: NavItem[] = [
-  { title: "Products", href: "/products" },
-  { title: "Quotation", href: "/quotation" },
-  { title: "Orders", href: "/orders" },
-];
 
 export default async function OrdersPage() {
   const session = await getCurrentUser();
+  if (!session?.user || session.user.role !== "USER") {
+    return <div>Unauthorized</div>;
+  }
   const orders = await prisma.order.findMany({
-    where: { userId: session?.user?.id },
+    where: { userId: session.user.id },
     include: { items: { include: { product: true } } },
     orderBy: { createdAt: "desc" },
   });
 
   return (
-    <DashboardShell title="My Orders" description="Track your past and current orders." nav={nav}>
-      <div className="space-y-4">
+    <PremiumLayout role="USER" userName={session.user.name || "User"}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">My Orders</h1>
+          <p className="text-sm text-slate-500 mt-1">Track your past and current orders.</p>
+        </div>
+        <div className="space-y-4">
         {orders.map((order) => (
           <div key={order.id} className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -38,8 +40,8 @@ export default async function OrdersPage() {
               ))}
             </div>
           </div>
-        ))}
+        </div>
       </div>
-    </DashboardShell>
+    </PremiumLayout>
   );
 }
