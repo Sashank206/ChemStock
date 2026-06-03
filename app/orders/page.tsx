@@ -40,8 +40,9 @@ export default async function OrdersPage() {
               ))}
             </div>
           </div>
-        </div>
+        ))}
       </div>
-    </PremiumLayout>
+    </div>
+  </PremiumLayout>
   );
 }

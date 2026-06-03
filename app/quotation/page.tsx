@@ -82,8 +82,9 @@ export default async function QuotationPage() {
               </form>
             ) : null}
           </div>
-        </div>
+        ))}
       </div>
-    </PremiumLayout>
+    </div>
+  </PremiumLayout>
   );
 }

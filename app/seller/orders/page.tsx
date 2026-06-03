@@ -36,8 +36,9 @@ export default async function SellerOrdersPage() {
               ))}
             </div>
           </div>
-        </div>
+        ))}
       </div>
-    </PremiumLayout>
+    </div>
+  </PremiumLayout>
   );
 }

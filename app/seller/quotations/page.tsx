@@ -41,8 +41,9 @@ export default async function SellerQuotationsPage() {
               ))}
             </div>
           </div>
-        </div>
+        ))}
       </div>
-    </PremiumLayout>
+    </div>
+  </PremiumLayout>
   );
 }
