@@ -1,0 +1,204 @@
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/session";
+import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { productSchema } from "@/lib/validations";
+import { formatMoney } from "@/lib/pricing";
+
+const nav: NavItem[] = [
+  { title: "Products", href: "/seller/products" },
+  { title: "Orders", href: "/seller/orders" },
+  { title: "Quotations", href: "/seller/quotations" },
+];
+
+async function createProduct(formData: FormData) {
+  "use server";
+  const session = await getCurrentUser();
+  const values = productSchema.parse({
+    name: formData.get("name"),
+    sku: formData.get("sku"),
+    description: formData.get("description"),
+    image: formData.get("image"),
+    category: formData.get("category"),
+    dimension: formData.get("dimension"),
+    baseUnit: formData.get("baseUnit"),
+    stockQuantity: formData.get("stockQuantity"),
+    basePrice: formData.get("basePrice"),
+  });
+
+  await prisma.product.create({
+    data: {
+      name: values.name,
+      sku: values.sku,
+      description: values.description ?? null,
+      image: values.image ?? null,
+      category: values.category,
+      dimension: values.dimension,
+      baseUnit: values.baseUnit,
+      stockQuantity: Number(values.stockQuantity),
+      basePrice: Number(values.basePrice),
+      sellerId: session?.user?.id ?? "",
+    },
+  });
+}
+
+async function deleteProduct(formData: FormData) {
+  "use server";
+  const id = formData.get("id")?.toString();
+  if (!id) return;
+  await prisma.product.delete({ where: { id } });
+}
+
+async function updateProduct(formData: FormData) {
+  "use server";
+  const id = formData.get("id")?.toString();
+  if (!id) return;
+  const values = productSchema.parse({
+    name: formData.get("name"),
+    sku: formData.get("sku"),
+    description: formData.get("description"),
+    image: formData.get("image"),
+    category: formData.get("category"),
+    dimension: formData.get("dimension"),
+    baseUnit: formData.get("baseUnit"),
+    stockQuantity: formData.get("stockQuantity"),
+    basePrice: formData.get("basePrice"),
+  });
+
+  await prisma.product.update({
+    where: { id },
+    data: {
+      name: values.name,
+      sku: values.sku,
+      description: values.description ?? null,
+      image: values.image ?? null,
+      category: values.category,
+      dimension: values.dimension,
+      baseUnit: values.baseUnit,
+      stockQuantity: Number(values.stockQuantity),
+      basePrice: Number(values.basePrice),
+    },
+  });
+}
+
+export default async function SellerProductsPage() {
+  const session = await getCurrentUser();
+  const products = await prisma.product.findMany({
+    where: { sellerId: session?.user?.id },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <DashboardShell title="My Products" description="Add and manage your inventory." nav={nav}>
+      <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
+          <h2 className="text-lg font-semibold text-foreground">Create Product</h2>
+          <form action={createProduct} className="mt-6 grid gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2 text-sm">
+                <span>Name</span>
+                <Input name="name" />
+              </label>
+              <label className="grid gap-2 text-sm">
+                <span>SKU</span>
+                <Input name="sku" />
+              </label>
+            </div>
+            <label className="grid gap-2 text-sm">
+              <span>Description</span>
+              <Input name="description" />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2 text-sm">
+                <span>Category</span>
+                <Input name="category" />
+              </label>
+              <label className="grid gap-2 text-sm">
+                <span>Dimension</span>
+                <Input name="dimension" />
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2 text-sm">
+                <span>Base Unit</span>
+                <Select name="baseUnit" defaultValue="item">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["g", "kg", "mL", "L", "item"].map((unit) => (
+                      <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+              <label className="grid gap-2 text-sm">
+                <span>Stock Quantity</span>
+                <Input name="stockQuantity" type="number" step="0.01" />
+              </label>
+            </div>
+            <label className="grid gap-2 text-sm">
+              <span>Base Price</span>
+              <Input name="basePrice" type="number" step="0.01" />
+            </label>
+            <Button type="submit" className="w-fit">Create Product</Button>
+          </form>
+        </section>
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-border/50">
+          <h2 className="text-lg font-semibold text-foreground">My Products</h2>
+          <div className="mt-6 space-y-4">
+            {products.map((product) => (
+              <div key={product.id} className="rounded-3xl border border-border/70 bg-background p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">SKU {product.sku} • {product.category}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{formatMoney(Number(product.basePrice))}</p>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <form action={deleteProduct} className="flex gap-2">
+                    <input type="hidden" name="id" value={product.id} />
+                    <Button type="submit" variant="destructive" size="sm">Delete</Button>
+                  </form>
+                  <details className="rounded-3xl border border-border/70 bg-muted p-4">
+                    <summary className="cursor-pointer text-sm font-medium text-foreground">Edit</summary>
+                    <form action={updateProduct} className="mt-4 grid gap-4">
+                      <input type="hidden" name="id" value={product.id} />
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Input name="name" defaultValue={product.name} placeholder="Name" />
+                        <Input name="sku" defaultValue={product.sku} placeholder="SKU" />
+                      </div>
+                      <Input name="description" defaultValue={product.description ?? ""} placeholder="Description" />
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Input name="category" defaultValue={product.category} placeholder="Category" />
+                        <Input name="dimension" defaultValue={product.dimension} placeholder="Dimension" />
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Input name="stockQuantity" type="number" step="0.01" defaultValue={product.stockQuantity.toString()} placeholder="Stock" />
+                        <Input name="basePrice" type="number" step="0.01" defaultValue={product.basePrice.toString()} placeholder="Price" />
+                      </div>
+                      <Select name="baseUnit" defaultValue={product.baseUnit}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["g", "kg", "mL", "L", "item"].map((unit) => (
+                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="submit" size="sm">Save</Button>
+                    </form>
+                  </details>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </DashboardShell>
+  );
+}
