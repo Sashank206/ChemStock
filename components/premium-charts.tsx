@@ -251,7 +251,7 @@ export function AreaChart({
               width={Math.max(1, endX - startX)}
               height={chartHeight}
               fill="transparent"
-              onMouseEnter={(e) => {
+              onMouseEnter={() => {
                 setHoveredIdx(i);
                 if (containerRef.current) {
                   const rect = containerRef.current.getBoundingClientRect();
@@ -407,7 +407,7 @@ export function BarChart({
                 colorMap[color].bar,
                 "transition-all duration-200 cursor-pointer ease-in-out"
               )}
-              onMouseEnter={(e) => {
+              onMouseEnter={() => {
                 setHoveredIdx(i);
                 if (containerRef.current) {
                   const rect = containerRef.current.getBoundingClientRect();
@@ -445,7 +445,6 @@ export function BarChart({
 // 3. DONUT CHART COMPONENT
 export function DonutChart({
   data,
-  height = 200,
   valueType = "number",
   className,
 }: DonutChartProps) {
@@ -459,7 +458,23 @@ export function DonutChart({
   const strokeWidth = 14;
   const center = 80;
 
-  let currentOffset = 0;
+  const slices = data.map((item, idx) => {
+    const share = item.value / (total || 1);
+    const strokeLength = share * circ;
+    
+    // Sum up the stroke lengths of all previous items to calculate offset immutably
+    const previousSum = data.slice(0, idx).reduce((sum, prevItem) => {
+      const prevShare = prevItem.value / (total || 1);
+      return sum + prevShare * circ;
+    }, 0);
+
+    const strokeOffset = -previousSum;
+    return {
+      ...item,
+      strokeLength,
+      strokeOffset,
+    };
+  });
 
   return (
     <div className={cn("flex flex-col sm:flex-row items-center gap-6", className)}>
@@ -481,12 +496,7 @@ export function DonutChart({
           />
 
           {/* Slices */}
-          {data.map((item, idx) => {
-            const share = item.value / (total || 1);
-            const strokeLength = share * circ;
-            const strokeOffset = -currentOffset;
-            currentOffset += strokeLength;
-
+          {slices.map((item, idx) => {
             const isHovered = hoveredIdx === idx;
 
             return (
@@ -498,8 +508,8 @@ export function DonutChart({
                 fill="transparent"
                 stroke={item.color}
                 strokeWidth={isHovered ? strokeWidth + 2 : strokeWidth}
-                strokeDasharray={`${strokeLength} ${circ}`}
-                strokeDashoffset={strokeOffset}
+                strokeDasharray={`${item.strokeLength} ${circ}`}
+                strokeDashoffset={item.strokeOffset}
                 className="transition-all duration-200 cursor-pointer ease-out origin-center"
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}

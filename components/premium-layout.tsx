@@ -58,7 +58,9 @@ export function PremiumLayout({ children, role, userName }: PremiumLayoutProps) 
     // Check local storage or system preference on initial load
     const isDark = localStorage.getItem("theme") === "dark" || 
       (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    setDarkMode(isDark);
+    setTimeout(() => {
+      setDarkMode(isDark);
+    }, 0);
   }, []);
 
   useEffect(() => {

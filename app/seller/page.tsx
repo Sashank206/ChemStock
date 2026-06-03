@@ -1,6 +1,6 @@
 import { PremiumLayout } from "@/components/premium-layout";
 import { StatCard, PremiumCard } from "@/components/premium-cards";
-import { StatusBadge } from "@/components/premium-badge";
+import { StatusBadge, type StatusType } from "@/components/premium-badge";
 import { PremiumTable } from "@/components/premium-table";
 import { AreaChart } from "@/components/premium-charts";
 import { prisma } from "@/lib/prisma";
@@ -259,7 +259,7 @@ export default async function SellerPage() {
                 data={tableData}
                 renderCell={(key, value) => {
                   if (key === "status") {
-                    return <StatusBadge status={value as any} />;
+                    return <StatusBadge status={value as StatusType} />;
                   }
                   return value;
                 }}

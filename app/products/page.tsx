@@ -1,16 +1,14 @@
+import { Prisma } from "@prisma/client";
 import { formatMoney } from "@/lib/pricing";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { PremiumLayout } from "@/components/premium-layout";
 import { PremiumCard } from "@/components/premium-cards";
 import { EmptyState } from "@/components/premium-empty-state";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Search,
   ShoppingCart,
   Package,
-  Zap,
 } from "lucide-react";
 
 async function requestQuotation(formData: FormData) {
@@ -63,7 +61,7 @@ export default async function ProductsPage({
     select: { category: true },
   });
 
-  const where: any = {};
+  const where: Prisma.ProductWhereInput = {};
   if (searchParams.q) {
     where.name = { contains: searchParams.q, mode: "insensitive" };
   }

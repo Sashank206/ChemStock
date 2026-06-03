@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { productSchema } from "@/lib/validations";
 import { formatMoney } from "@/lib/pricing";
-import { cn } from "@/lib/utils";
 
 async function createProduct(formData: FormData) {
   "use server";

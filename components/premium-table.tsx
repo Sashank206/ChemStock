@@ -8,7 +8,9 @@ interface PremiumTableProps {
     label: string;
     sortable?: boolean;
   }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Array<Record<string, any>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderCell?: (key: string, value: any, row: Record<string, any>) => ReactNode;
   onSort?: (key: string) => void;
   sortBy?: string;
@@ -33,7 +35,11 @@ export function PremiumTable({
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-6 py-4 text-left font-semibold text-slate-900 dark:text-white"
+                className={cn(
+                  "px-6 py-4 text-left font-semibold text-slate-900 dark:text-white",
+                  col.sortable && "cursor-pointer select-none hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                )}
+                onClick={() => col.sortable && onSort?.(col.key)}
               >
                 <div className="flex items-center gap-2">
                   {col.label}

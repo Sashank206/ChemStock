@@ -1,6 +1,6 @@
 import { PremiumLayout } from "@/components/premium-layout";
 import { StatCard, PremiumCard } from "@/components/premium-cards";
-import { StatusBadge } from "@/components/premium-badge";
+import { StatusBadge, type StatusType } from "@/components/premium-badge";
 import { PremiumTable } from "@/components/premium-table";
 import { AreaChart, DonutChart } from "@/components/premium-charts";
 import { prisma } from "@/lib/prisma";
@@ -24,12 +24,11 @@ export default async function AdminPage() {
   }
 
   // 1. Core aggregates
-  const [totalSellers, totalUsers, totalProducts, totalOrders, revenueData, recentOrders, lowStockProducts, categoryCounts] =
+  const [totalSellers, totalUsers, totalProducts, revenueData, recentOrders, lowStockProducts, categoryCounts] =
     await Promise.all([
       prisma.user.count({ where: { role: "SELLER" } }),
       prisma.user.count({ where: { role: "USER" } }),
       prisma.product.count(),
-      prisma.order.count(),
       prisma.order.findMany({ select: { totalAmount: true } }),
       prisma.order.findMany({
         include: { user: true, items: { include: { product: true } } },
@@ -114,7 +113,7 @@ export default async function AdminPage() {
               Dashboard Overview
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Welcome back, {session.user.name}. Here's the snapshot of your store analytics.
+              Welcome back, {session.user.name}. Here&apos;s the snapshot of your store analytics.
             </p>
           </div>
           <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 text-xs font-semibold text-slate-600 dark:text-slate-400">
@@ -222,9 +221,9 @@ export default async function AdminPage() {
               <PremiumTable
                 columns={tableColumns}
                 data={tableData}
-                renderCell={(key, value, row) => {
+                renderCell={(key, value) => {
                   if (key === "status") {
-                    return <StatusBadge status={value as any} />;
+                    return <StatusBadge status={value as StatusType} />;
                   }
                   return value;
                 }}
